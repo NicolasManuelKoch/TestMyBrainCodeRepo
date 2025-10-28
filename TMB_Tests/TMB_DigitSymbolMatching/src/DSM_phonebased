@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="description" content="TMB Digit Symbol Matching">
+<meta name="copyright" content="2023 The Many Brains Project, Inc. and McLean Hospital LGPLv3">
+<meta name="keywords" content="cognitive test, brain test, digit-symbol coding">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=contain">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TMB DSC">
+<meta name="theme-color" content="white">
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+<link rel="icon" href="/favicon.ico">
+<title>Digit Symbol Matching</title>
+<style>
+  *{border-radius:0;box-sizing:border-box}*::after,*::before{box-sizing:border-box}
+  html{width:100vw;height:100vh}
+  body{width:100vw;height:100vh;margin:auto;background:#fff;color:#000;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;font-size:13pt;text-align:center}
+  #container{height:470px;width:310px;position:absolute;top:50%;left:50%;margin-top:-235px;margin-left:-155px;display:none}
+  .button{border:2px solid #f1c40f;border-radius:1em;background:transparent;color:#000;box-shadow:0 5px 15px 5px grey}
+  .button:active{box-shadow:0 5px 15px 1px lightgrey}
+  .button:focus{outline:none}
+  .img-responsive{display:inline-block;max-width:100%;height:auto;border:5px solid white}
+  .responseHighlight{border:5px solid red}
+
+  /* --- Mobile start overlay --- */
+  #tapStart{
+    display:none;position:fixed;inset:0;z-index:9999;
+    background:#0b4db8;color:#fff;border:0;cursor:pointer;
+    font-size:28px;line-height:1.2;padding:0 10vw;
+  }
+  #tapStart b{display:block;font-size:32px;margin-bottom:.4rem}
+  #tapStart small{display:block;font-size:16px;opacity:.9}
+  @media (max-width:640px){
+    #tapStart{display:block}
+  }
+</style>
+
+<!-- required libs -->
+<script type="text/javascript" src="TestMyBrain.12.18.min.js"></script>
+<script type="text/javascript" src="chooseInput.v1.Feb24.js"></script>
+<script type="text/javascript" src="TestHelper.v1.Oct23.js"></script>
+
+<script type="text/javascript">
+/* === ORIGINAL SCRIPT (unchanged task logic) === */
+var testVersion,chosenInput,symbols,symbol,digit,correct,testStart=0,score=0,results=[],outcomes={},frameSequence=[],frame,presentationTime,nopractice,duration,moresymbols,seed,debug,demo,showresults,autosave,filename,useChooseInput,usage,practiceChoice=null;
+function showOptionalPractice(){setTimeout(function(){showAlert("<h3>TMB Digit Symbol Matching</h3>Please choose whether to:<br><br><br><label><input class='radioAlign' id='practiceSkip' type='radio' name='practice' value='skip' checked>Skip practice trials</label><br><br><label><input class='radioAlign' id='practiceNoSkip' type='radio' name='practice' value='noSkip'>View practice trials</label><br><br><br>","Click here to continue",function(){practiceChoice=document.getElementById('practiceSkip').checked?'skip':'noSkip';setFrameSequence();},'20pt');},50);}
+tmbUI.onreadyUI=function(){if(debug==='true'&&tmbUI.message)console.log(tmbUI.message);correct=parseInt(tmbUI.response.slice(-1))===frame.digit?1:0;
+if(frame.type==="practice"||(frame.type==="test"&&tmbUI.status!=="timeout")){
+results.push({type:frame.type,symbol:frame.symbol,digit:frame.digit,response:tmbUI.response.slice(-1),correct:correct,rt:tmbUI.rt,stimOnsetTimestamp:presentationTime,responseTimestamp:tmbUI.downTimestamp,state:tmbUI.status});
+if(debug==='true')logResults(results,'inc');}
+else if(frame.type==="test"&&tmbUI.status==="timeout"){
+results.push({type:frame.type,symbol:frame.symbol,digit:frame.digit,response:null,correct:null,rt:null,stimOnsetTimestamp:presentationTime,responseTimestamp:now(),state:'timeout'});}
+if(frame.type==="practice"){
+if(tmbUI.status==="timeout"||!correct){
+frameSequence.unshift(frame);
+showAlert("<img src="+frame.source+" alt='Symbol'><br>"+(chosenInput==='taps'?"<br>Remember:<br><b>touch the screen</b> to respond.<br><br>You should <b>touch "+frame.digit+"</b><br>":"<br>Remember:<br><b>use the keyboard</b> to respond.<br><br>You should <b>press "+frame.digit+"</b> on the <b>keyboard</b> <br>")+"when you see this symbol.<br><br>",(chosenInput==='taps'?"Click here to retry":''),function(){showFrame("null");nextTrial();},'20pt',null,(chosenInput==='taps'?null:'Press the SPACEBAR to retry'));}else{nextTrial();}}
+else if(frame.type==="test"){
+if(tmbUI.status!=="timeout"){
+while(symbols[(symbol=randInt(1,6))-1]===frame.symbol){}digit=symbol%3===0?3:symbol%3;
+frameSequence.push({type:"test",message:"",symbol:symbols[symbol-1],digit:digit,source:"images/"+symbols[symbol-1]+".png"});}
+nextTrial();}};
+function nextTrial(){frame=frameSequence.shift();if(frame){if(frame.type==="begin")showAlert(frame.message,(chosenInput==='taps'?"Click here for instructions":''),function(){showFrame("null");nextTrial();},'20pt',null,(chosenInput==='taps'?null:'Press the SPACEBAR for instructions'));
+else if(frame.type==="message")showAlert(frame.message,(chosenInput==='taps'?"Click here to continue":''),function(){showFrame("null");nextTrial();},'20pt',null,(chosenInput==='taps'?null:'Press the SPACEBAR to continue'));
+else{hideCursor("document.body");getID("probe").src=frame.source;
+if(frame.type==="practice")tmbUI.timeout=5000;else{if(!testStart)testStart=now();if(demo==='true')tmbUI.timeout=10000-(now()-testStart);else tmbUI.timeout=duration*1E3-(now()-testStart);if(tmbUI.timeout<150&&tmbUI.timeout>0){tmbUI.timeout=150;}else if(tmbUI.timeout<=0){nextTrial();return;}}
+requestAnimationFrame(function(){showFrame("container","probeRow","keyRow1","keyRow2","response");presentationTime=now();tmbUI.getInput();});}}
+else{showCursor("document.body");var tmp1=results.filter(function(obj){return obj.type!=='practice'&&obj.state!=='timeout';});var tmp2=tmp1.filter(function(obj){return obj.correct===1;}).pluck('rt');var tmp3=tmp1[0]?tmp1[0].state:null;tmp3=/key/i.test(tmp3)?'keyboard':/touch/i.test(tmp3)?'touch':/mouse/i.test(tmp3)?'mouse':/pen/i.test(tmp3)?'pen':'unknown';
+score=outcomes.score=tmp2.length;outcomes.num_correct=tmp2.length;outcomes.num_responses=tmp1.length;outcomes.meanRTc=tmp2.length?tmp2.average().round(2):null;outcomes.medianRTc=tmp2.length?tmp2.median().round(2):null;outcomes.sdRTc=tmp2.length>1?tmp2.sd().round(2):null;outcomes.accuracy=outcomes.num_responses>0?(outcomes.num_correct/outcomes.num_responses).round(4):null;outcomes.cvRTc=tmp2.length>1?(outcomes.sdRTc/outcomes.medianRTc).round(4):null;outcomes.didPracticeTrials=(nopractice==='false'||practiceChoice==='noSkip')?1:0;outcomes.symbolsUsed=symbols.toString();outcomes.responseDevice=tmp3;outcomes.testVersion=testVersion;
+if(debug==="true")logResults([outcomes],'cum');
+if(showresults==="true"||autosave==='true'||filename){outcomes.type='summaryScores';results.push(outcomes);
+showAlert("Your score is "+score+".<br><br>The test is over.<br>Thank you for participating!<br><br>","",null,'20pt');
+setTimeout(function(){if(filename===false)filename="DSCresults.csv";tmbSubmitToFile(results,filename,autosave);},2000);}
+else{showAlert("Test complete!","",function(){},'20pt');}}}
+function setFrameSequence(){var testMessage;
+testMessage={begin:"<h2>Matching Shapes And Numbers</h2><img src='images/key.png' alt='Title image'><br><br>",instructions:["<h3>Instructions:</h3><br><img src='images/key.png' alt='Instructions'><br><br>Each <b>symbol</b> has a <b>number</b>.<br><br>","<img src='images/1.png' alt='Instructions'><br><img src='images/keySmall.png' alt='Instructions'><br><br>When a symbol appears at the top,<br>"+(chosenInput==='taps'?"<b>touch</b> its number <b>on the screen</b><br>":"press its number on the <b>keyboard</b><br>")+"(here it is 1).<br><br>"],practice:["<img src='images/2.png' alt='Instructions'><br><img src='images/keySmall.png' alt='Instructions'><br><br>Let's practice a few symbols.<br><br><br>","Excellent!<br>You have completed the practice.<br>Now let's do more.<br><br>"],test:"Your score will be<br>how many correct responses<br>you make in "+duration+" seconds,<br>so try to be <b>ACCURATE</b> and <b>QUICK</b>!<br><br>"};
+var frameType,frameMessage,frameSymbol,frameDigit;
+if(nopractice!=='optional'){frameType=["begin","message","message"];frameMessage=[testMessage.begin,testMessage.instructions[0],testMessage.instructions[1]];frameSymbol=[0,0,0];frameDigit=[0,0,0];}
+else{frameType=["message","message"];frameMessage=[testMessage.instructions[0],testMessage.instructions[1]];frameSymbol=[0,0];frameDigit=[0,0];}
+if(practiceChoice==='noSkip'||nopractice==='false'){frameType=frameType.concat(["message","practice","practice","practice","message"]);frameMessage=frameMessage.concat([testMessage.practice[0], "","","",testMessage.practice[1]]);frameSymbol=frameSymbol.concat([0,1,3,5,0]);frameDigit=frameDigit.concat([0,1,3,2,0]);}
+frameType=frameType.concat(["message","test"]);frameMessage=frameMessage.concat([testMessage.test,""]);frameSymbol=frameSymbol.concat([0,4]);frameDigit=frameDigit.concat([0,1]);
+for(var i=0;i<frameType.length;i++){frameSequence.push({type:frameType[i],message:frameMessage[i],symbol:symbols[frameSymbol[i]-1],digit:frameDigit[i],source:"images/"+symbols[frameSymbol[i]-1]+".png"});}
+nextTrial();}
+function setup(input){chosenInput=input;if(chosenInput==='taps'){tmbUI.UIevents=['taps'];tmbUI.UIelements=['resp1','resp2','resp3'];}
+else{tmbUI.UIevents=['keys'];tmbUI.UIkeys=[keyToCode('1'),keyToCode('2'),keyToCode('3'),keyToCode('numpad1'),keyToCode('numpad2'),keyToCode('numpad3')];tmbUI.UIelements=['resp1','resp2','resp3','resp1','resp2','resp3'];}
+tmbUI.highlight="responseHighlight";
+if(moresymbols){symbols=range(1,30).shuffle().slice(0,6);}else{symbols=[1,2,3,4,5,6];}
+var images=[];for(var i=0;i<30;i++)images[i]="images/"+(i+1)+".png";images[30]="images/resp1.png";images[31]="images/resp2.png";images[32]="images/resp3.png";images[33]="images/key.png";images[34]="images/keySmall.png";
+imagePreLoad(images,{pipeline:false,callBack:function(){for(var i=0;i<6;i++)getID("img"+(i+1)).src="images/"+symbols[i]+".png";nopractice==='optional'?showOptionalPractice():setFrameSequence();}});}
+window.onload=function(){
+var copyright="Copyright "+document.querySelector('meta[name=\"copyright\"]').content;var scriptName=window.location.pathname.split('/').pop();
+setBodyScale(680,650);
+if((usage=getUrlParameters("help","",true))){showAlert("<p id='helpSpan'><b>"+document.title+"</b><br><i>"+copyright+"</i><br><br><b>Usage:</b><br>"+scriptName+"?urlParam1=1&urlParam2=0<br><br><b>URL Parameters</b>:<br><i>nopractice=false</i> -- omits practice trials [true, false, optional]<br><i>duration=90</i> -- test duration in seconds<br><i>moresymbols=false</i> -- should we draw from a pool of 30 symbols?<br><i>seed=123</i> -- random number generator seed<br><i>demo=true</i> -- runs in demo mode only for 10 seconds<br><i>chooseinput=true</i> -- whether we use chooseInput when touch is detected<br><i>debug=true</i> -- outputs trial by trial info to the console<br><i>showresults=true</i> -- allows to save results locally in a file<br><i>autosave=true</i> -- will attempt to save results automatically to file<br><i>filename=subject1.csv</i> -- the filename to save results to<br><i>help</i> -- print this message");document.getElementById('helpSpan').style.textAlign='left';document.getElementById('helpSpan').style.margin='50px';return;}
+debug=getUrlParameters("debug","",true);demo=getUrlParameters("demo","",true);showresults=getUrlParameters("showresults","",true);autosave=getUrlParameters("autosave","",true);filename=getUrlParameters("filename","",true);
+nopractice=getUrlParameters("nopractice","",true);if(!nopractice)nopractice='false';else if(!(nopractice==='true'||nopractice==='false'||nopractice==='optional')){showAlert("Error: URL parameter 'nopractice' must<br>be set to 'true', 'false', or 'optional'.<br><br>","",null,'20pt');return;}
+moresymbols=getUrlParameters("moresymbols","",true);if(moresymbols==="true"){moresymbols=true;}else if(moresymbols==="false"||!moresymbols){moresymbols=false;}else{showAlert("Invalid value for URL parameter: moresymbols");return;}
+useChooseInput=getUrlParameters("chooseinput","",true);if(!useChooseInput||useChooseInput==='true'){useChooseInput=true;}else if(useChooseInput==='false'){useChooseInput=false;}else{showAlert("Error: URL parameter 'chooseinput' must<br>be set to 'true' or 'false'.<br><br>","",null,'20pt');return;}
+seed=getUrlParameters("seed","",true);if(!(seed=parseInt(seed)))seed="DScoding";Math.seedrandom(seed);
+duration=getUrlParameters("duration","",true);if(!(duration=parseInt(duration)))duration=90;
+testVersion=scriptName.replace(/\.[^/.]+$/, "");disableSelect();disableRightClick();disableDrag();disableDoubleTapZoom();
+if(!hasTouch) setup('keys'); else { if(useChooseInput) chooseInput({keyboard:true,touch:true},setup); else setup('taps'); }
+};
+
+/* === MOBILE START OVERLAY (adds tap-to-continue for phones) === */
+document.addEventListener('DOMContentLoaded',function(){
+  var isTouch=('ontouchstart' in window)||(navigator.maxTouchPoints>0);
+  if(!isTouch) return;
+  var b=document.createElement('button');
+  b.id='tapStart';
+  b.innerHTML='<b>Tap to start</b><small>(If you see “Press SPACEBAR”, tapping will continue)</small>';
+  b.addEventListener('click',fireSpace,false);
+  b.addEventListener('touchstart',function(e){e.preventDefault();fireSpace();},{passive:false});
+  function fireSpace(){
+    try{ window.dispatchEvent(new KeyboardEvent('keydown',{key:' '})); }catch(e){}
+    b.style.display='none';
+  }
+  document.body.appendChild(b);
+});
+</script>
+</head>
+
+<body>
+  <div id="container">
+    <div id="probeRow"><img id="probe" class="img-responsive" src="images/1.png" alt="probe"></div><br><br>
+    <div id="keyRow1"><img id="img1" img src="" alt="key 1"><img id="img2" img src="" alt="key 2"><img id="img3" img src="" alt="key 3"></div>
+    <div id="keyRow2"><img id="img4" img src="" alt="key 4"><img id="img5" img src="" alt="key 5"><img id="img6" img src="" alt="key 6"></div>
+    <div id="response"><img class="img-responsive" id="resp1" src="images/resp1.png" alt="response 1"><img class="img-responsive" id="resp2" src="images/resp2.png" alt="response 2"><img class="img-responsive" id="resp3" src="images/resp3.png" alt="response 3"></div>
+  </div>
+  <noscript>For full functionality of this site it is necessary to enable JavaScript.<br>Here are the <a href="https://www.enable-javascript.com/" target="_blank" rel="noopener noreferrer">instructions</a> how to enable JavaScript in your web browser.</noscript>
+</body>
+</html>
