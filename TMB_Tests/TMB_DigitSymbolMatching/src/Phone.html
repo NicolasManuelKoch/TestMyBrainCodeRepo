@@ -23,11 +23,7 @@
   .button:focus{outline:none}
   .img-responsive{display:inline-block;max-width:100%;height:auto;border:5px solid white}
   .responseHighlight{border:5px solid red}
-  /* Tap overlay shown on touch devices to satisfy SPACE prompts */
-  #tapStart{
-    display:none;position:fixed;inset:0;z-index:9999;border:0;cursor:pointer;
-    background:#0b4db8;color:#fff;font-size:28px;line-height:1.2;padding:0 10vw
-  }
+  #tapStart{display:none;position:fixed;inset:0;z-index:9999;border:0;cursor:pointer;background:#0b4db8;color:#fff;font-size:28px;line-height:1.2;padding:0 10vw}
   #tapStart b{display:block;font-size:32px;margin-bottom:.4rem}
   #tapStart small{display:block;font-size:16px;opacity:.9}
 </style>
@@ -147,6 +143,15 @@ function nextTrial(){
     outcomes.symbolsUsed = symbols.toString();
     outcomes.responseDevice = tmp3;
     outcomes.testVersion = testVersion;
+
+    /* --- SEND RESULT TO QUALTRICS --- */
+    try {
+      var pid = getUrlParameters("pid","",true) || "";
+      window.parent.postMessage(
+        { type:"DSM_RESULT", pid: pid, score: score, rt: outcomes.medianRTc },
+        "https://YOUR.qualtrics.com"   // <-- replace with your Qualtrics domain
+      );
+    } catch(e){}
 
     if(debug==="true") logResults([outcomes],'cum');
 
@@ -310,7 +315,6 @@ window.onload = function(){
     b.addEventListener('touchstart', function(e){e.preventDefault();fireSpace();},{passive:false});
     function fireSpace(){ try{window.dispatchEvent(new KeyboardEvent('keydown',{key:' '}));}catch(e){} b.style.display='none'; }
     document.body.appendChild(b);
-    // show after first paint
     requestAnimationFrame(function(){ b.style.display='block'; });
   }
 };
@@ -331,3 +335,4 @@ window.onload = function(){
   </noscript>
 </body>
 </html>
+
