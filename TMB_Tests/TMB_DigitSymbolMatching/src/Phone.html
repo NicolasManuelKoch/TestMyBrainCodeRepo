@@ -149,7 +149,7 @@ function nextTrial(){
       var pid = getUrlParameters("pid","",true) || "";
       window.parent.postMessage(
         { type:"DSM_RESULT", pid: pid, score: score, rt: outcomes.medianRTc },
-        "https://YOUR.qualtrics.com"   // <-- replace with your Qualtrics domain
+        "https://capilanopsych.yul1.qualtrics.com"   // <-- your Qualtrics origin
       );
     } catch(e){}
 
@@ -252,7 +252,7 @@ function setup(input){
 
 /* Boot: auto-pick input; add tap overlay on touch so SPACE prompts work */
 window.onload = function(){
-  var copyright = "Copyright "+document.querySelector('meta[name=\"copyright\"]').content;
+  var copyright = "Copyright "+document.querySelector('meta[name="copyright"]').content;
   var scriptName = window.location.pathname.split('/').pop();
 
   setBodyScale(680,650);
@@ -335,4 +335,5 @@ window.onload = function(){
   </noscript>
 </body>
 </html>
+
 
