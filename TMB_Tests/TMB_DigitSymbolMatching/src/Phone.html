@@ -23,6 +23,13 @@
   .button:focus{outline:none}
   .img-responsive{display:inline-block;max-width:100%;height:auto;border:5px solid white}
   .responseHighlight{border:5px solid red}
+  /* Tap overlay shown on touch devices to satisfy SPACE prompts */
+  #tapStart{
+    display:none;position:fixed;inset:0;z-index:9999;border:0;cursor:pointer;
+    background:#0b4db8;color:#fff;font-size:28px;line-height:1.2;padding:0 10vw
+  }
+  #tapStart b{display:block;font-size:32px;margin-bottom:.4rem}
+  #tapStart small{display:block;font-size:16px;opacity:.9}
 </style>
 
 <!-- required libs -->
@@ -31,7 +38,7 @@
 <script type="text/javascript" src="TestHelper.v1.Oct23.js"></script>
 
 <script type="text/javascript">
-/* === ORIGINAL VARS === */
+/* === VARS === */
 var testVersion,chosenInput,symbols,symbol,digit,correct,testStart=0,score=0,results=[],outcomes={},frameSequence=[],frame,presentationTime,nopractice,duration,moresymbols,seed,debug,demo,showresults,autosave,filename,useChooseInput,usage,practiceChoice=null;
 
 /* Optional-practice dialog */
@@ -41,9 +48,9 @@ function showOptionalPractice(){
               "Please choose whether to:<br><br><br>"+
               "<label><input class='radioAlign' id='practiceSkip' type='radio' name='practice' value='skip' checked>Skip practice trials</label><br><br>"+
               "<label><input class='radioAlign' id='practiceNoSkip' type='radio' name='practice' value='noSkip'>View practice trials</label><br><br><br>",
-              "Tap to continue",
+              (chosenInput==='taps'?"Click here to continue":""),
               function (){ practiceChoice=document.getElementById('practiceSkip').checked?'skip':'noSkip'; setFrameSequence(); },
-              '20pt');
+              '20pt', null, (chosenInput==='taps'?null:'Press the SPACEBAR to continue'));
   },50);
 }
 
@@ -67,11 +74,13 @@ tmbUI.onreadyUI = function(){
     if(tmbUI.status === "timeout" || !correct){
       frameSequence.unshift(frame);
       showAlert("<img src="+frame.source+" alt='Symbol'><br>"+
-                "<br>Remember:<br><b>touch the screen</b> to respond.<br><br>"+
-                "You should <b>tap "+frame.digit+"</b> when you see this symbol.<br><br>",
-                "Tap to retry",
+                (chosenInput==='taps'
+                  ? "<br>Remember:<br><b>touch the screen</b> to respond.<br><br>You should <b>touch "+frame.digit+"</b><br>"
+                  : "<br>Remember:<br><b>use the keyboard</b> to respond.<br><br>You should <b>press "+frame.digit+"</b> on the <b>keyboard</b><br>")+
+                "when you see this symbol.<br><br>",
+                (chosenInput==='taps'?"Click here to retry":""),
                 function(){ showFrame("null"); nextTrial(); },
-                '20pt');
+                '20pt', null, (chosenInput==='taps'?null:'Press the SPACEBAR to retry'));
     } else {
       nextTrial();
     }
@@ -91,11 +100,15 @@ function nextTrial(){
   frame = frameSequence.shift();
   if (frame){
     if (frame.type === "begin")
-      showAlert(frame.message, "Tap for instructions",
-        function (){ showFrame("null"); nextTrial(); }, '20pt');
+      showAlert(frame.message,
+        (chosenInput==='taps'?"Click here for instructions":""),
+        function (){ showFrame("null"); nextTrial(); }, '20pt', null,
+        (chosenInput==='taps'?null:'Press the SPACEBAR for instructions'));
     else if (frame.type === "message")
-      showAlert(frame.message, "Tap to continue",
-        function (){ showFrame("null"); nextTrial(); }, '20pt');
+      showAlert(frame.message,
+        (chosenInput==='taps'?"Click here to continue":""),
+        function (){ showFrame("null"); nextTrial(); }, '20pt', null,
+        (chosenInput==='taps'?null:'Press the SPACEBAR to continue'));
     else {
       hideCursor("document.body");
       getID("probe").src = frame.source;
@@ -147,13 +160,18 @@ function nextTrial(){
   }
 }
 
-/* Frame sequence (messages edited to tap-only) */
+/* Frame sequence (messages adapt to chosen input) */
 function setFrameSequence(){
   var testMessage = {
     begin: "<h2>Matching Shapes And Numbers</h2><img src='images/key.png' alt='Title image'><br><br>",
     instructions: [
       "<h3>Instructions:</h3><br><img src='images/key.png' alt='Instructions'><br><br>Each <b>symbol</b> has a <b>number</b>.<br><br>",
-      "<img src='images/1.png' alt='Instructions'><br><img src='images/keySmall.png' alt='Instructions'><br><br>When a symbol appears at the top,<br><b>touch</b> its number on the <b>screen</b> (here it is 1).<br><br>"
+      "<img src='images/1.png' alt='Instructions'><br><img src='images/keySmall.png' alt='Instructions'><br><br>"+
+      "When a symbol appears at the top,<br>"+
+      (chosenInput==='taps'
+        ? "<b>touch</b> its number <b>on the screen</b><br>"
+        : "press its number on the <b>keyboard</b><br>")+
+      "(here it is 1).<br><br>"
     ],
     practice: [
       "<img src='images/2.png' alt='Instructions'><br><img src='images/keySmall.png' alt='Instructions'><br><br>Let's practice a few symbols.<br><br><br>",
@@ -197,23 +215,29 @@ function setFrameSequence(){
   nextTrial();
 }
 
-/* Setup: FORCE touch mode on mobile; no Spacebar paths */
+/* Setup: honor input (keys on desktop, taps on touch) */
 function setup(input){
-  chosenInput = 'taps';                           // force taps
-  tmbUI.UIevents   = ['taps'];
-  tmbUI.UIelements = ['resp1','resp2','resp3'];
+  chosenInput = input;                       // 'keys' or 'taps'
+  if (chosenInput === 'taps'){
+    tmbUI.UIevents   = ['taps'];
+    tmbUI.UIelements = ['resp1','resp2','resp3'];
+  } else {
+    tmbUI.UIevents   = ['keys'];
+    tmbUI.UIkeys     = [keyToCode('1'),keyToCode('2'),keyToCode('3'),
+                        keyToCode('numpad1'),keyToCode('numpad2'),keyToCode('numpad3')];
+    tmbUI.UIelements = ['resp1','resp2','resp3','resp1','resp2','resp3'];
+  }
   tmbUI.highlight  = "responseHighlight";
 
+  // symbols
   if (moresymbols){ symbols = range(1,30).shuffle().slice(0,6); }
   else            { symbols = [1,2,3,4,5,6]; }
 
+  // preload
   var images = [];
   for(var i=0;i<30;i++) images[i] = "images/" + (i+1) + ".png";
-  images[30] = "images/resp1.png";
-  images[31] = "images/resp2.png";
-  images[32] = "images/resp3.png";
-  images[33] = "images/key.png";
-  images[34] = "images/keySmall.png";
+  images[30] = "images/resp1.png"; images[31] = "images/resp2.png"; images[32] = "images/resp3.png";
+  images[33] = "images/key.png";   images[34] = "images/keySmall.png";
 
   imagePreLoad(images,{pipeline:false, callBack:function(){
     for(var i=0;i<6;i++) getID("img"+(i+1)).src = "images/" + symbols[i] + ".png";
@@ -221,9 +245,9 @@ function setup(input){
   }});
 }
 
-/* Boot: force chooseinput=false and taps flow */
+/* Boot: auto-pick input; add tap overlay on touch so SPACE prompts work */
 window.onload = function(){
-  var copyright = "Copyright "+document.querySelector('meta[name="copyright"]').content;
+  var copyright = "Copyright "+document.querySelector('meta[name=\"copyright\"]').content;
   var scriptName = window.location.pathname.split('/').pop();
 
   setBodyScale(680,650);
@@ -232,16 +256,16 @@ window.onload = function(){
     showAlert("<p id='helpSpan'><b>"+document.title+"</b><br><i>"+copyright+
       "</i><br><br><b>Usage:</b><br>"+scriptName+"?urlParam1=1&urlParam2=0<br><br>"+
       "<b>URL Parameters</b>:<br>"+
-      "<i>nopractice=false</i> — practice trials [true,false,optional]<br>"+
-      "<i>duration=90</i> — test seconds<br>"+
-      "<i>moresymbols=false</i> — draw from 30 symbols?<br>"+
-      "<i>seed=123</i> — RNG seed<br>"+
-      "<i>demo=true</i> — 10s demo<br>"+
-      "<i>debug=true</i> — console logs<br>"+
-      "<i>showresults=true</i> — local save dialog<br>"+
-      "<i>autosave=true</i> — auto file save<br>"+
-      "<i>filename=subject1.csv</i> — save filename<br>"+
-      "<i>help</i> — this help"); 
+      "<i>nopractice=false</i> -- practice trials [true, false, optional]<br>"+
+      "<i>duration=90</i> -- test seconds<br>"+
+      "<i>moresymbols=false</i> -- draw from 30 symbols?<br>"+
+      "<i>seed=123</i> -- RNG seed<br>"+
+      "<i>demo=true</i> -- 10s demo<br>"+
+      "<i>debug=true</i> -- console logs<br>"+
+      "<i>showresults=true</i> -- local save dialog<br>"+
+      "<i>autosave=true</i> -- auto file save<br>"+
+      "<i>filename=subject1.csv</i> -- save filename<br>"+
+      "<i>help</i> -- this help");
     var hs=document.getElementById('helpSpan'); hs.style.textAlign='left'; hs.style.margin='50px';
     return;
   }
@@ -263,8 +287,7 @@ window.onload = function(){
   else if (moresymbols==="false" || !moresymbols) moresymbols=false;
   else { showAlert("Invalid value for URL parameter: moresymbols"); return; }
 
-  // FORCE: chooseinput=false (ignore any URL that says otherwise)
-  useChooseInput = false;
+  useChooseInput = true; // allow chooser on touch
 
   seed = getUrlParameters("seed", "", true);
   if(!(seed = parseInt(seed))) seed = "DScoding";
@@ -276,8 +299,20 @@ window.onload = function(){
   testVersion = scriptName.replace(/\.[^/.]+$/, "");
   disableSelect(); disableRightClick(); disableDrag(); disableDoubleTapZoom();
 
-  // Always run taps setup (works on mobile & desktop)
-  setup('taps');
+  if(!hasTouch) setup('keys');
+  else chooseInput({keyboard:true, touch:true}, setup);
+
+  // Mobile tap overlay to satisfy any SPACE prompts
+  if (hasTouch){
+    var b=document.createElement('button');
+    b.id='tapStart'; b.innerHTML='<b>Tap to start/continue</b><small>(If a message says “Press SPACEBAR”, tapping works)</small>';
+    b.addEventListener('click', fireSpace, {passive:false});
+    b.addEventListener('touchstart', function(e){e.preventDefault();fireSpace();},{passive:false});
+    function fireSpace(){ try{window.dispatchEvent(new KeyboardEvent('keydown',{key:' '}));}catch(e){} b.style.display='none'; }
+    document.body.appendChild(b);
+    // show after first paint
+    requestAnimationFrame(function(){ b.style.display='block'; });
+  }
 };
 </script>
 </head>
