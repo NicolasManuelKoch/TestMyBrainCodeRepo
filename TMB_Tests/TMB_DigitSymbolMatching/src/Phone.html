@@ -156,7 +156,7 @@ function nextTrial(){
           attempts: outcomes.num_responses,     // total responses
           accuracy: outcomes.accuracy           // correct/attempts
         },
-        "https://capilanopsych.yul1.qualtrics.com"
+        "*"  // allow any parent; Qualtrics will still check e.origin
       );
     } catch(e){}
 
@@ -340,5 +340,7 @@ window.onload = function(){
     Here are the <a href="https://www.enable-javascript.com/" target="_blank" rel="noopener noreferrer">instructions</a> how to enable JavaScript in your web browser.
   </noscript>
 </body>
+</html>
+
 </html>
 
