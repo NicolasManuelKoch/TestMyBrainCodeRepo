@@ -154,7 +154,7 @@
               order: outcomes.reportOrder,     // forward/backward
               device: outcomes.responseDevice  // keyboard/touch/mouse/pen
             },
-            "https://capilanopsych.yul1.qualtrics.com"  // Qualtrics origin
+            "*"  // let the parent receive; Qualtrics will verify e.origin
           );
         } catch(e){}
 
