@@ -158,13 +158,23 @@
           );
         } catch(e){}
 
-        // Save or show
+        // Save or show (standalone / debug use)
         if(showresults === "true" || autosave === 'true' || filename){
           outcomes.type='summaryScores'; results.push(outcomes);
-          showAlert("Your score is " + score + ".<br><br>The test is over.<br>Thank you for participating!<br><br>","",null,'20pt');
-          setTimeout(function(){ if(filename===false) filename=reportOrder+"SpanResults.csv"; tmbSubmitToFile(results,filename,autosave); },2000);
+          showAlert(
+            "Your score is " + score + ".<br><br>The test is over.<br>Thank you for participating!<br><br>",
+            "",
+            null,
+            '20pt'
+          );
+          setTimeout(function(){
+            if(filename===false) filename=reportOrder+"SpanResults.csv";
+            tmbSubmitToFile(results,filename,autosave);
+          },2000);
         } else {
-          tmbSubmitToServer(results,score,outcomes);
+          // Embedded-in-Qualtrics mode: data are handled by the parent via postMessage.
+          // No server submission here to avoid 405 errors on non-TMB hosts.
+          // (Previously: tmbSubmitToServer(results,score,outcomes);)
         }
       }
     }
@@ -293,4 +303,3 @@
   </noscript>
 </body>
 </html>
-
